@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lê Phương Như</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Georgia', serif;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .name {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff69b4;
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 105, 180, 0.8),
+                         0 0 40px rgba(255, 105, 180, 0.6);
+            z-index: 10;
+            letter-spacing: 2px;
+            transition: all 0.5s ease;
+        }
+
+        .button {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ff69b4, #ff1493);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.6);
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        .button:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.9);
+        }
+
+        .button:active {
+            transform: translate(-50%, -50%) scale(0.95);
+        }
+
+        @media (max-width: 768px) {
+            .name {
+                font-size: 2rem;
+            }
+            .button {
+                font-size: 1rem;
+                padding: 12px 28px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .name {
+                font-size: 1.5rem;
+            }
+            .button {
+                font-size: 0.9rem;
+                padding: 10px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="heartCanvas"></canvas>
+    <div class="name" id="nameText">Lê Phương Như</div>
+    <button class="button" id="changeButton">Bấm tôi đi</button>
+
+    <script>
+        const canvas = document.getElementById('heartCanvas');
+        const ctx = canvas.getContext('2d');
+        const nameText = document.getElementById('nameText');
+        const changeButton = document.getElementById('changeButton');
+
+        // Button click event
+        changeButton.addEventListener('click', () => {
+            nameText.textContent = 'Anh yêu em';
+            nameText.style.transform = 'translate(-50%, -50%) scale(1.2)';
+            setTimeout(() => {
+                nameText.style.transform = 'translate(-50%, -50%) scale(1)';
+            }, 300);
+        });
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        class Particle {
+            constructor(x, y) {
+                this.baseX = x;
+                this.baseY = y;
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = Math.random() * 2 - 1;
+                this.speedY = Math.random() * 2 - 1;
+                this.offsetX = 0;
+                this.offsetY = 0;
+                this.angle = Math.random() * Math.PI * 2;
+                this.angleSpeed = Math.random() * 0.02 + 0.01;
+                this.opacity = Math.random() * 0.5 + 0.5;
+            }
+
+            update() {
+                this.angle += this.angleSpeed;
+                this.offsetX = Math.cos(this.angle) * 20;
+                this.offsetY = Math.sin(this.angle) * 20;
+                this.x = this.baseX + this.offsetX;
+                this.y = this.baseY + this.offsetY;
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(255, 105, 180, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Add glow effect
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#ff69b4';
+            }
+        }
+
+        function createHeartShape(centerX, centerY, scale) {
+            const particles = [];
+            const points = 1000;
+            
+            for (let i = 0; i < points; i++) {
+                const t = (i / points) * Math.PI * 2;
+                
+                // Heart shape parametric equations
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+                
+                const particleX = centerX + x * scale;
+                const particleY = centerY + y * scale;
+                
+                particles.push(new Particle(particleX, particleY));
+            }
+            
+            return particles;
+        }
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const scale = Math.min(canvas.width, canvas.height) / 40;
+        
+        let particles = createHeartShape(centerX, centerY, scale);
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // Recreate particles on window resize
+        window.addEventListener('resize', () => {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const scale = Math.min(canvas.width, canvas.height) / 40;
+            particles = createHeartShape(centerX, centerY, scale);
+        });
+    </script>
+</body>
+</html>
